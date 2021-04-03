@@ -22,37 +22,21 @@
 
 module sevenseg(
   input clk,
-  input reset,
-  input [31:0] step_count,
-  input [15:0] distance_covered,
-  input [3:0] initial_activity_count,
-  input [15:0]high_activity_time,
-  input [1:0]output_mode,
+  input [1:0] reset,
+  input [15:0] in,
   output [3:0] an,
   output reg [6:0] seg
 ); 
 
-wire [6:0] out_steps;
-wire [6:0] out_distance;
-wire [6:0] out_init_count;
-wire [6:0] out_high_activity;
+wire [6:0] out;
 
 // BCD instantiation
-reg [3:0] bcd_steps = 0; // Input to BCD, output directly tied to seg
-reg [3:0] bcd_distance = 0;
-reg [3:0] bcd_init_count = 0;
-reg [3:0] bcd_high_activity = 0;
-bcd steps (clk, bcd_steps, out_steps);
-bcd distance (clk, bcd_distance, out_distance);
-bcd init_count (clk, bcd_init_count, out_init_count);
-bcd high_activity (clk, bcd_high_activity, out_high_activity);
-
-
+reg [3:0] bcd_in = 0; // Input to BCD, output directly tied to seg
+bcd counter (clk, bcd_in, out);
 
 // Clock divider - Divide-by-2
 reg [15:0] count = 0;
 wire slow_clk = count[15];
-
 
 // State register variables
 reg [1:0] current = 0;
@@ -65,91 +49,41 @@ always @(posedge slow_clk) current <= next;
 reg [3:0] an_buf = 0;
 assign an = an_buf;
 always @(posedge clk) begin
-    count <= count + 1;
-    seg <= (output_mode[1]) ? ((output_mode[0]) ? out_high_activity: out_init_count) : ((output_mode[0]) ? out_distance: out_steps);
+    seg <= out;
 
     if(reset) begin // Synchronous reset
-        bcd_steps <= 4'b0000;// Set outputs
         an_buf <= 4'b1110;
         next <= 0;// set next state
-        end
+    end     
     else begin
         case(current)
-        0: begin // state 0
-        
-                //bcd input for step count
-                bcd_steps <= ((step_count % 1000) % 100) % 10;
-            
-                //bcd input for distance covered
-                if(distance_covered[0] == 0) begin
-                    bcd_distance <= 0;
-                end
-                else begin
-                    bcd_distance <= 5;
-                end
-                
-                //bcd input for intial activity time over 32 steps/sec
-                bcd_init_count <= initial_activity_count;
-                
-                //bcd input for high activity time
-                bcd_high_activity <= ((high_activity_time % 1000) % 100) % 10;
-            
+        0: begin // state 0  
                 an_buf <= 4'b1110; 
+                //bcd input for count
+                bcd_in <= ((in % 1000) % 100) % 10;
                 next <= 1; // set next state
             end
         1: begin // state 1
-        
-                //bcd input for step count
-                bcd_steps <= ((step_count % 1000) % 100)/10;
-            
-                //bcd input for distance covered
-                bcd_distance <= 10;      //number corresponding to underscore in bcd.v
-
-                bcd_init_count <= 0;
-                
-                //bcd input for high activity time
-                bcd_high_activity <= ((high_activity_time % 1000) % 100) / 10;
-            
                 an_buf <= 4'b1101;
+                //bcd input for count
+                bcd_in <= ((in % 1000) % 100)/10;  
                 next <= 2;
             end
         2:begin
-        
-                //bcd input for step count
-                bcd_steps <= (step_count % 1000)/100;
-                
-                //bcd input for distance covered
-                bcd_distance <=  (distance_covered / 2) % 10;
-
-                bcd_init_count <= 0;
-                
-                //bcd input for high activity time
-                bcd_high_activity <= (high_activity_time % 1000) / 100;
-                
-                an_buf <= 4'b1011;
+                an_buf <= 4'b1011;  
+                //bcd input for count
+                bcd_in <= (in % 1000)/100;
                 next <= 3;
             end
         3:begin
-        
-                //bcd input for step count
-                bcd_steps <= (step_count % 10000)/1000;
-                
-                 //bcd input for distance covered
-                bcd_distance <=  (distance_covered / 2) / 10;
-
-                bcd_init_count <= 0;
-                
-                //bcd input for high activity time
-
-                bcd_high_activity <= (high_activity_time % 10000) /1000;
-                
-                an_buf <= 4'b0111;
-                next <= 0;
-            end
+            an_buf <= 4'b0111;
+            //bcd input for count
+            bcd_in <= (in % 10000)/1000;
+            next <= 0;
+        end
         default: begin
-        
             //bcd input for step count
-            bcd_steps <= 4'd0000;
+            bcd_in <= 0;
             an_buf <= 4'b1110;
             next <= 1;
             end

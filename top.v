@@ -38,9 +38,9 @@ wire [7:0] data_bus;
 wire [1:0] btns_dbounced;
 
 //CHANGE THESE TWO LINES
-assign data_bus = 1;    //1st driver of the data bus--tristate switches
+assign data_bus = we ? data_out_ctrl : data_out_mem;    //1st driver of the data bus--tristate switches
                         //function of we and data_out_ctrl
-assign data_bus = 1;    //2nd driver of the data bus -- tristate switches 
+                        //2nd driver of the data bus -- tristate switches 
                         //function of we and data_out_mem
  
 memory mem(clk, cs, we, addr, data_bus, data_out_mem);

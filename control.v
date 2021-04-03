@@ -21,13 +21,13 @@
 
 module control(
     input clk,
-    input cs,
-    input we,
-    input [6:0] addr,
+    output cs,
+    output we,
+    output [6:0] addr,
     input [7:0] data_bus,
     output data_out_ctrl,
-    output [3:0] btns,
-    output [7:0] swtchs,
+    input [3:0] btns,
+    input [7:0] swtchs,
     output [7:0] leds,
     output [6:0] segs,
     output [3:0] an
