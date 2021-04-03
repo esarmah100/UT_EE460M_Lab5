@@ -21,13 +21,21 @@
 
 
 module memory(
-    input clk,
+    input clock,
     input cs,
     input we,
-    input [6:0] addr,
-    output [7:0] data_bus,
-    output [7:0] data_out_mem
+    input [6:0] address,
+    output [7:0] data_in,
+    output reg [7:0] data_out
     );
     
+    reg [7:0] RAM[0:127];
+
+    always @ (negedge clock)begin
+        if((we == 1) && (cs == 1))
+            RAM[address] <= data_in[7:0];
+
+        data_out <= RAM[address]; 
+    end
     
 endmodule
