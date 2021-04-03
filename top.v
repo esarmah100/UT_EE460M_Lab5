@@ -35,6 +35,7 @@ wire [6:0] addr;
 wire [7:0] data_out_mem;
 wire [7:0] data_out_ctrl;
 wire [7:0] data_bus;
+wire [1:0] btns_dbounced;
 
 //CHANGE THESE TWO LINES
 assign data_bus = 1;    //1st driver of the data bus--tristate switches
@@ -43,9 +44,11 @@ assign data_bus = 1;    //2nd driver of the data bus -- tristate switches
                         //function of we and data_out_mem
  
 memory mem(clk, cs, we, addr, data_bus, data_out_mem);
-control ctrl(clk, cs, we, addr, data_bus, data_out_ctrl, btns, swtchs, leds, segs, an);
+control ctrl(clk, cs, we, addr, data_bus, data_out_ctrl, {btns[3:2], btns_dbounced[1:0]}, swtchs, leds, segs, an);
 
 //add any other functions you need
 //(e.g. debouncing, multiplexing, clock-division, etc)
+debounce_and_single_pulse debounce0(clk, btns[0], btns_dbounced[0]);
+debounce_and_single_pulse debounce1(clk, btns[1], btns_dbounced[1]);
 
 endmodule

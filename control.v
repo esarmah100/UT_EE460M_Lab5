@@ -33,5 +33,43 @@ module control(
     output [3:0] an
     );
     
+
+
+
+    always @ (posedge clk)begin
+        
+
+        if(btns[1:0])begin
+            case(btns) 
+                2'b0001: begin //Enter/Push
+
+                    end
+                2'b0010: begin //Delete/Pop
+                        
+                    end
+                2'b0101: begin //Add
+
+                    end
+                2'b0110: begin //Subtract
+                        
+                    end
+                2'b1001: begin //Top
+
+                    end
+                2'b1010: begin //Clear/RST
+                        
+                    end
+                2'b1101: begin //Inc Addr
+
+                    end
+                2'b1110: begin //Dec Addr
+                        
+                    end
+                default: begin
+                    
+                end
+            endcase
+        end
+    end 
     
 endmodule
