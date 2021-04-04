@@ -24,7 +24,7 @@ module control(
     output cs,
     output we,
     output [6:0] address,
-    input [6:0] data_in,
+    input [7:0] data_in,
     output [7:0] data_out,
     input [3:0] btns,
     input [7:0] swtchs,
@@ -47,13 +47,13 @@ module control(
     sevenseg display(clk, DVR, an, segs); 
 
     assign leds[7] = (SPR == 7'h7F);
-    assign leds[6:0] = DAR[6:0];
+    assign leds[6:0] = DAR;
 
     assign cs = 1;
     
     initial begin      
-        SPR = 8'h7F;
-        DAR = 8'h00;
+        SPR = 7'h7F;
+        DAR = 7'h00;
         DVR = 8'h00;
         operand1 = 0;
         operand2 = 0;
@@ -71,9 +71,11 @@ module control(
     assign we = w_en;
     assign address = addr;
 
-    always @(posedge clk) begin
+    always @(negedge clk) begin
         current <= next;
+    end
 
+    always @(posedge clk) begin
         case(current)
             0: begin // state 0: Waiting for Inputs
                 if(btns[3:0])begin
@@ -90,13 +92,15 @@ module control(
                                 end
                             4'b0101: begin //Add
                                     w_en <= 0;
-                                    addr <= SPR;
+                                    addr <= SPR + 1;
+                                    SPR <= SPR + 1;
                                     mode <= 0;
                                     next <= 3;
                                 end
                             4'b0110: begin //Subtract
                                     w_en <= 0;
-                                    addr <= SPR;
+                                    addr <= SPR + 1;
+                                    SPR <= SPR + 1;
                                     mode <= 1;
                                     next <= 3;
                                 end
@@ -133,14 +137,16 @@ module control(
                 end 
             3:  begin // State 3: Addition/Subtraction Part 1
                     operand1 <= data_in;
+                    addr <= SPR + 1;
                     SPR <= SPR + 1;
-                    next <= 4;
+                    next <= 5;
                 end
-            4:  begin // State 4: Addition/Subtraction Part 2
-                    addr <= SPR;
-                    next <= 5;               
+            4:  begin // State 4: Addition/Subtraction Part 4
+                    SPR <= SPR - 1;
+                    DAR <= SPR;
+                    next <= 8;            
                 end 
-            5:  begin // State 5: Addition/Subtraction Part 3
+            5:  begin // State 5: Addition/Subtraction Part 2
                     operand2 <= data_in;
                     if(!mode) begin
                             next <= 6;
@@ -149,17 +155,17 @@ module control(
                             next <= 7;
                     end
                 end
-            6:  begin // State 6: Addition Part 4
+            6:  begin // State 6: Addition Part 3
                     w_en <= 1;
                     addr <= SPR;
                     dataOut <= operand1 + operand2;
-                    next <= 8;
+                    next <= 4;
                 end
-            7:  begin // State 7: Subtraction Part 5
+            7:  begin // State 7: Subtraction Part 3
                     w_en <= 1;
                     addr <= SPR;
                     dataOut <= operand1 - operand2;
-                    next <= 8;
+                    next <= 4;
                 end      
             8:begin // state 8: Sending DAR to address
                     w_en <= 0;
