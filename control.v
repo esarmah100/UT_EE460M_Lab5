@@ -71,39 +71,38 @@ always @(posedge clk) begin
         case(current)
         0: begin // state 0: Waiting for Inputs
               if(btns[3:0])begin
-            case(btns) 
-                2'b0001: begin //Enter/Push
-                        next <= 1;
-                    end
-                2'b0010: begin //Delete/Pop
-                        next <= 2;
-                    end
-                2'b0101: begin //Add
-                        next <= 3;
-                    end
-                2'b0110: begin //Subtract
-                        next <= 4;
-                    end
-                2'b1001: begin //Top
-                        next <= 5;
-                    end
-                2'b1010: begin //Clear/RST
-                        next <= 6;
-                    end
-                2'b1101: begin //Inc Addr
-                        next <= 7;
-                    end
-                2'b1110: begin //Dec Addr
-                        next <= 8;                  
-                    end
-            endcase
-        end  
+                    case(btns) 
+                        2'b0001: begin //Enter/Push
+                                w_en <= 1;
+                                dataOut <= swtchs;
+                                addr <= SPR;
+                                next <= 1;
+                            end
+                        2'b0010: begin //Delete/Pop
+                                next <= 2;
+                            end
+                        2'b0101: begin //Add
+                                next <= 3;
+                            end
+                        2'b0110: begin //Subtract
+                                next <= 4;
+                            end
+                        2'b1001: begin //Top
+                                next <= 5;
+                            end
+                        2'b1010: begin //Clear/RST
+                                next <= 6;
+                            end
+                        2'b1101: begin //Inc Addr
+                                next <= 7;
+                            end
+                        2'b1110: begin //Dec Addr
+                                next <= 8;                  
+                            end
+                    endcase
+                end  
             end
         1: begin // state 1: Enter/Push
-                w_en <= 1;
-                dataOut <= swtchs;
-                addr <= SPR;
-                #20
                 SPR <= SPR - 1;  
                 next <= 0;            
             end
