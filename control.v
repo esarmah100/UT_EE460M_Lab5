@@ -127,7 +127,7 @@ always @(posedge clk) begin
                operand2 <= data_in;
                SPR <=  SPR + 1;
                
-               //addition
+               //addition + push
                SPR <= SPR - 1;
                #20
                dataOut <= operand1 + operand2;
@@ -151,7 +151,7 @@ always @(posedge clk) begin
                operand2 <= data_in;
                SPR <=  SPR + 1;
                
-               //addition
+               //subtraction + push
                SPR <= SPR - 1;
                #20
                dataOut <= operand1 - operand2;
