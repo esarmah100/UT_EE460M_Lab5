@@ -68,31 +68,39 @@ always @(posedge clk) begin
         0: begin // state 0: Waiting for Inputs
               if(btns[3:0])begin
                     case(btns) 
-                        2'b0001: begin //Enter/Push
+                        4'b0001: begin //Enter/Push
                                 w_en <= 1;
                                 dataOut <= swtchs;
                                 addr <= SPR;
                                 next <= 1;
                             end
-                        2'b0010: begin //Delete/Pop
+                        4'b0010: begin //Delete/Pop
+                                w_en <= 0;
                                 next <= 2;
                             end
-                        2'b0101: begin //Add
+                        4'b0101: begin //Add
+                                w_en <= 0;
+                                addr <= SPR;
                                 next <= 3;
                             end
-                        2'b0110: begin //Subtract
-                                next <= 4;
+                        4'b0110: begin //Subtract
+                                w_en <= 0;
+                                addr <= SPR;
+                                next <= 3;
                             end
-                        2'b1001: begin //Top
-                                next <= 5;
+                        4'b1001: begin //Top
+                                DAR <= SPR + 1;
+                                next <= 8;
                             end
-                        2'b1010: begin //Clear/RST
-                                next <= 6;
+                        4'b1010: begin //Clear/RST
+                                next <= 10;
                             end
-                        2'b1101: begin //Inc Addr
-                                next <= 7;
+                        4'b1101: begin //Inc Addr
+                                DAR = DAR + 1;
+                                next <= 8;
                             end
-                        2'b1110: begin //Dec Addr
+                        4'b1110: begin //Dec Addr
+                                DAR = DAR - 1;
                                 next <= 8;                  
                             end
                     endcase
@@ -102,90 +110,54 @@ always @(posedge clk) begin
                 SPR <= SPR - 1;  
                 next <= 0;            
             end
-        2:begin // state 2: Delete/Pop
-               w_en <= 0;
+        2:  begin // state 2: Delete/Pop
                SPR <= SPR + 1;
                next <= 0;
             end 
-        3:begin // State 3: Add
-               w_en <= 0;
-               
-               //retrieving first operand
-               addr <= SPR;
-               #20
+        3:  begin // State 3: Addition/Subtraction Part 1
                operand1 <= data_in;
                SPR <= SPR + 1;
-               
-               //retrieving second operand
+               next <= 4;
+            end
+        4:  begin // State 4: Addition/Subtraction Part 2
                addr <= SPR;
-               #20
+               next <= 5;               
+            end 
+        5:  begin // State 5: Addition/Subtraction Part 3
                operand2 <= data_in;
-               SPR <=  SPR + 1;
-               
-               //addition + push
-               SPR <= SPR - 1;
-               #20
+               if(btns ==  4'b0101) begin
+                    next <= 6;
+               end
+               else begin
+                    next <= 7;
+               end
+            end
+        6:  begin // State 6: Addition/Subtraction Part 4
+               w_en <= 1;
+               addr <= SPR;
                dataOut <= operand1 + operand2;
+               next <= 8;
+            end
+        7:  begin // State 7: Addition/Subtraction Part 5
                w_en <= 1;
                addr <= SPR;
-               
-               next <= 0;  
-            end
-        4: begin // state 4: Subtract
-               w_en <= 0;
-               
-               //retrieving first operand
-               addr <= SPR;
-               #20
-               operand1 <= data_in;
-               SPR <= SPR + 1;
-               
-               //retrieving second operand
-               addr <= SPR;
-               #20
-               operand2 <= data_in;
-               SPR <=  SPR + 1;
-               
-               //subtraction + push
-               SPR <= SPR - 1;
-               #20
                dataOut <= operand1 - operand2;
-               w_en <= 1;
-               addr <= SPR;
-               
-               next <= 0;                
-            end
-        5:begin // state 5: Top
-               DAR <= SPR + 1;
+               next <= 8;
+            end      
+        8:begin // state 8: Sending DAR to address
                addr <= DAR;
-               #20
-               DVR <= data_in;
-               
-               next <= 0;
+               next <= 9;
             end 
-        6:begin // State 6: Clear/RST
+        9:begin // state 9: Updating DVR
+               DVR <= data_in;
+               next <= 0;
+            end
+        10:begin // State 6: Clear/RST
                 SPR = 8'h7F;
                 DAR = 8'h00;
                 DVR = 8'h00;
-                
                 next <= 0;
             end
-        7: begin // state 7: Inc Addr
-                DAR = DAR + 1;
-                addr <= DAR;
-                #20
-                DVR <= data_in;
-                
-                next <= 0;
-            end
-        8:begin // state 2: Dec Addr
-                DAR = DAR - 1;
-                addr <= DAR;
-                #20
-                DVR <= data_in;
-                
-                next <= 0;      
-            end 
     endcase
 end
 
