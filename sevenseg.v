@@ -22,7 +22,6 @@
 
 module sevenseg(
   input clk,
-  input [1:0] reset,
   input [15:0] in,
   output [3:0] an,
   output reg [6:0] seg
@@ -34,61 +33,50 @@ wire [6:0] out;
 reg [3:0] bcd_in = 0; // Input to BCD, output directly tied to seg
 bcd counter (clk, bcd_in, out);
 
-// Clock divider - Divide-by-2
-reg [15:0] count = 0;
-wire slow_clk = count[15];
-
 // State register variables
 reg [1:0] current = 0;
 reg [1:0] next = 0;
 
-// Sequential logic
-always @(posedge slow_clk) current <= next;
 
 // Combinational logic
 reg [3:0] an_buf = 0;
 assign an = an_buf;
 always @(posedge clk) begin
     seg <= out;
+    current <= next;
 
-    if(reset) begin // Synchronous reset
-        an_buf <= 4'b1110;
-        next <= 0;// set next state
-    end     
-    else begin
-        case(current)
-        0: begin // state 0  
-                an_buf <= 4'b1110; 
-                //bcd input for count
-                bcd_in <= ((in % 1000) % 100) % 10;
-                next <= 1; // set next state
-            end
-        1: begin // state 1
-                an_buf <= 4'b1101;
-                //bcd input for count
-                bcd_in <= ((in % 1000) % 100)/10;  
-                next <= 2;
-            end
-        2:begin
-                an_buf <= 4'b1011;  
-                //bcd input for count
-                bcd_in <= (in % 1000)/100;
-                next <= 3;
-            end
-        3:begin
+    case(current)
+    0: begin // state 0  
+            an_buf <= 4'b1110; 
+            //bcd input for count
+            bcd_in <= ((in % 1000) % 100) % 10;
+            next <= 1; // set next state
+        end
+    1: begin // state 1
+            an_buf <= 4'b1101;
+            //bcd input for count
+            bcd_in <= ((in % 1000) % 100)/10;  
+            next <= 2;
+        end
+    2:begin
+            an_buf <= 4'b1011;  
+            //bcd input for count
+            bcd_in <= (in % 1000)/100;
+            next <= 3;
+        end
+    3:begin
             an_buf <= 4'b0111;
             //bcd input for count
             bcd_in <= (in % 10000)/1000;
             next <= 0;
         end
-        default: begin
+    default: begin
             //bcd input for step count
             bcd_in <= 0;
             an_buf <= 4'b1110;
             next <= 1;
-            end
-        endcase
-    end
+        end
+    endcase
 end
 
 endmodule
