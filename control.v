@@ -42,6 +42,7 @@ module control(
     reg [7:0] dataOut = 0;
     reg [6:0] addr = 0;
     reg w_en = 0;
+    reg mode = 0; //0 for addition, 1 for subtraction
     
     initial begin      
         SPR = 8'h7F;
@@ -81,11 +82,13 @@ always @(posedge clk) begin
                         4'b0101: begin //Add
                                 w_en <= 0;
                                 addr <= SPR;
+                                mode <= 0;
                                 next <= 3;
                             end
                         4'b0110: begin //Subtract
                                 w_en <= 0;
                                 addr <= SPR;
+                                mode <= 1;
                                 next <= 3;
                             end
                         4'b1001: begin //Top
@@ -125,20 +128,20 @@ always @(posedge clk) begin
             end 
         5:  begin // State 5: Addition/Subtraction Part 3
                operand2 <= data_in;
-               if(btns ==  4'b0101) begin
+               if(!mode) begin
                     next <= 6;
                end
                else begin
                     next <= 7;
                end
             end
-        6:  begin // State 6: Addition/Subtraction Part 4
+        6:  begin // State 6: Addition Part 4
                w_en <= 1;
                addr <= SPR;
                dataOut <= operand1 + operand2;
                next <= 8;
             end
-        7:  begin // State 7: Addition/Subtraction Part 5
+        7:  begin // State 7: Subtraction Part 5
                w_en <= 1;
                addr <= SPR;
                dataOut <= operand1 - operand2;
