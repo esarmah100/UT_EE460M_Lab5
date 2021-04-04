@@ -51,24 +51,20 @@ module control(
         operand2 = 0;
     end
 
-// Clock divider - Divide-by-2
-reg [15:0] count = 0;
-wire slow_clk = count[15];
 
 // State register variables
 reg [3:0] current = 0;
 reg [3:0] next = 0;
 
-// Sequential logic
-always @(posedge slow_clk) current <= next;
 
 
 assign data_out = dataOut;
 assign we = w_en;
 assign address = addr;
 always @(posedge clk) begin
+        current <= next;
 
-        case(current)
+    case(current)
         0: begin // state 0: Waiting for Inputs
               if(btns[3:0])begin
                     case(btns) 
@@ -190,8 +186,8 @@ always @(posedge clk) begin
                 
                 next <= 0;      
             end 
-        endcase
-    end
+    endcase
+end
 
     
 endmodule
